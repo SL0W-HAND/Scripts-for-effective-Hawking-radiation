@@ -1,6 +1,6 @@
 """
 Reproduce los resultados numericos de la seccion de tesis sobre el sistema
-autoconsistente con momentos de segundo orden (E=1, m=0, caida marginal).
+con momentos de segundo orden (E=1, m=0, caida marginal).
 
 Genera, en este orden, los datos de cada cuadro:
   Cuadro 1  barrido en mom_max            -> lambda_c converge, r_c no
@@ -40,6 +40,7 @@ Rat = sp.Rational
 r_dot  = p_r*f + f1*G11 + Rat(1, 2)*p_r*G20*f2
 pr_dot = (Rat(1, 2)*W1 - Rat(1, 2)*f1*p_r**2 - Rat(1, 2)*f1*G02
           - f2*p_r*G11 + Rat(1, 4)*W3*G20 - Rat(1, 4)*f3*p_r**2*G20)
+# corchetes {G,G} en la convención posición-primero (ver second_order_system_sign_flip.py)
 G11_dot = -(-f*G02 - Rat(1, 2)*W2*G20 + Rat(1, 2)*f2*p_r**2*G20)
 G02_dot = -(2*p_r*f1*G02 - W2*G11 + f2*p_r**2*G11)
 G20_dot = -(-2*f*G11 - 2*p_r*f1*G20)
@@ -177,5 +178,5 @@ for i in radios_idx:
     fila = "".join(f"{(rr[i]-c)*P[i]:16.4e}" for c in candidatos)
     print(f"{rr[i]:12.6f}{fila}")
 
-print("\n(en el caso clasico este producto es constante en -1.99999997;")
+print("\n(en el caso clasico este producto tiende a -2;")
 print(" aqui crece sin estabilizarse para cualquier candidato de r_p)")

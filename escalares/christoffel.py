@@ -32,6 +32,7 @@ init_printing(use_unicode=True)
 
 A = Function('A', real=True)(r)
 B = Function('B', real=True)(r)
+m_regular = Function('m', real=True)(r)
 
 # ======================================================================
 # MÉTRICAS DISPONIBLES
@@ -50,15 +51,15 @@ B = Function('B', real=True)(r)
 # --- HAYWARD (activa para prueba) ---
 # f_H = 1 - 2*m*r**2/(r**3 + 2*m*l**2)
 
-f_H = 1 - 2*m*r**2 / (r**3 + 2*m*l**2)
-g_ij = [
-    [-f_H*c**2, 0, 0, 0],
-    [0, 1/f_H, 0, 0],
-    [0, 0, r**2, 0],
-    [0, 0, 0, r**2*sin(theta)**2]
-]
+# f_H = 1 - 2*m*r**2 / (r**3 + 2*m*l**2)
+# g_ij = [
+#     [-f_H, 0, 0, 0],
+#     [0, 1/f_H, 0, 0],
+#     [0, 0, r**2, 0],
+#     [0, 0, 0, r**2*sin(theta)**2]
+# ]
 
-# --- BARDEEN ---
+# # --- BARDEEN ---
 # f_B = 1 - 2*m*r**2/(r**2 + r0**2)**Rational(3, 2)
 
 # g_ij = [
@@ -67,6 +68,7 @@ g_ij = [
 #     [0, 0, r**2, 0],
 #     [0, 0, 0, r**2*sin(theta)**2]
 # ]
+
 
 # # --- DYMNIKOVA ---
 # f_D = 1 - 2*m*(1 - exp(-r**3/rs**3))/r
@@ -78,6 +80,24 @@ g_ij = [
 #     [0, 0, 0, r**2*sin(theta)**2]
 # ]
 
+# --- RBH GENÉRICA CON FUNCIÓN DE MASA m(r): f = 1 - 2 m(r)/r ---
+# (usada en momentum_energy_tensor.py para u, p_r, p_t en términos de m(r))
+f_m = 1 - 2*m_regular/r
+g_ij = [
+    [-f_m, 0, 0, 0],
+    [0, 1/f_m, 0, 0],
+    [0, 0, r**2, 0],
+    [0, 0, 0, r**2*sin(theta)**2]
+]
+
+# g_ij = [[
+#  -A, 0, 0, 0],
+#  [0, B, 0, 0],
+#  [0, 0, r**2, 0],
+#  [0, 0, 0, r**2*sin(theta)**2]]
+
+
+
 # ======================================================================
 
 # Métrica inversa g^ij (tu variable 'gij')
@@ -85,7 +105,7 @@ gij = [[Matrix(g_ij).inv()[i, j] for j in range(0, len(g_ij))] for i in range(0,
 
 
 # Función para calcular Símbolos de Christoffel
-def Christoffel(upperIndex, lowerIndex1, lowerIndex2, latex_output=True):
+def Christoffel(upperIndex, lowerIndex1, lowerIndex2, latex_output=True, verbose=False):
     upperIndexSymbol  = indices[upperIndex]
     lowerIndexSymbol1 = indices[lowerIndex1]
     lowerIndexSymbol2 = indices[lowerIndex2]
@@ -99,7 +119,7 @@ def Christoffel(upperIndex, lowerIndex1, lowerIndex2, latex_output=True):
         diff3 = diff(g_ij[lowerIndex1][lowerIndex2], indices[i])
         Christoffel_sum += Rational(1, 2)*term_inv_metric * (diff1 + diff2 - diff3)
 
-    if (Christoffel_sum != 0):
+    if verbose and Christoffel_sum != 0:
         if (latex_output == True):
             latex_str = (f"\\Gamma^{{{latex_index(upperIndexSymbol)}}}{{ }}"
                          f"_{{{latex_index(lowerIndexSymbol1)} {latex_index(lowerIndexSymbol2)}}} "
@@ -114,7 +134,7 @@ def Christoffel(upperIndex, lowerIndex1, lowerIndex2, latex_output=True):
     return Christoffel_sum
 
 
-def Christoffel_all(latex_output=False):
+def Christoffel_all(latex_output=False, verbose=False):
     """
     Crea un objeto con indices tipo tensor (que no es un tensor) que
     contiene todos los Christoffel.
@@ -125,11 +145,12 @@ def Christoffel_all(latex_output=False):
         for j in range(0, 4, 1):
             j_list = []
             for k_loop in range(0, 4, 1):
-                Christoffel_sym = Christoffel(i, j, k_loop, latex_output=latex_output)
+                Christoffel_sym = Christoffel(i, j, k_loop, latex_output=latex_output, verbose=verbose)
                 j_list.append(Christoffel_sym)
             i_list.append(j_list)
         Christoffel_list.append(i_list)
     return Christoffel_list
 
 
-Christoffel_all()
+if __name__ == "__main__":
+    Christoffel_all(latex_output=True, verbose=True)

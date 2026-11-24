@@ -67,4 +67,5 @@ def print_riemann():
                         print(f"R^{{{rho}}}_{{{sigma} {mu} {nu}}} &= {latex(val)} \\\\")
 
 
-print_riemann()
+if __name__ == "__main__":
+    print_riemann()

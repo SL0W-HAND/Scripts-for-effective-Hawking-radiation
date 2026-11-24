@@ -2,7 +2,7 @@ from riemann import riemann_down, gij
 from sympy import simplify, cancel, latex
 
 # -------------------------------------------------------------------
-# Escalar de Kretschner (Kretschmann)
+# Escalar de Kretschmann
 #
 # Definición:
 #   K = R_abcd R^abcd
@@ -43,6 +43,7 @@ for a in range(4):
 
 K = cancel(simplify(K))
 
-print(f"K &= {latex(K)} \\\\")
-print('#'*80)
-print(f"K &= {K} \\\\")
+if __name__ == "__main__":
+    print(f"K &= {latex(K)} \\\\")
+    print('#'*80)
+    print(f"K &= {K} \\\\")

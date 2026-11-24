@@ -13,6 +13,7 @@ if __name__ == "__main__":
         for nu in range(4):
             val = cancel(ricci_tensor[mu][nu])
             val = factor(val)
-            print(f"R_{{{mu}{nu}}} &= {latex(simplify(val))} \\\\")
-            print('#'*80)
-            print(f"R_{{{mu}{nu}}} &= {val} \\\\")
+            if val != 0:
+                print(f"R_{{{mu}{nu}}} &= {latex(simplify(val))} \\\\")
+                print('#'*80)
+                print(f"R_{{{mu}{nu}}} &= {val} \\\\")

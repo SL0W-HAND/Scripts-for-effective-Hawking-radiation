@@ -1,47 +1,27 @@
 """
 =============================================================================
  SCRIPT MAESTRO COMPLETO — Sistema semiclásico de momentos de 2º orden CON
- RETROALIMENTACIÓN (autoconsistente) en caída radial de Schwarzschild.
-
- VERSIÓN ADAPTADA: ecuaciones de evolución de los momentos G con el signo
- invertido respecto al script original, según el sistema:
-
-   r_dot   = p_r f + f' G11 + (1/2) p_r G20 f''
-   pr_dot  = (1/2) W' - (1/2) f' p_r^2 - (1/2) f' G02 - f'' p_r G11
-             + (1/4) W''' G20 - (1/4) f''' p_r^2 G20
-   G11_dot = -( -f G02 - (1/2) W'' G20 + (1/2) f'' p_r^2 G20 )
-   G02_dot = -( 2 p_r f' G02 - W'' G11 + f'' p_r^2 G11 )
-   G20_dot = -( -2 f G11 - 2 p_r f' G20 )
+ RETROALIMENTACIÓN (los momentos G actúan sobre r y p_r) en caída radial de Schwarzschild.
 =============================================================================
 
+ ADVERTENCIA: este script usa la ec. (5) de Bojowald et al. (2011) leída con
+ la posición en el primer índice, lo que invierte el signo de todos los
+ corchetes {G,G} y de las ecuaciones de los G (el "rebote" que produce es un
+ artefacto de ese signo). El sistema correcto está en
+ momentos_cambio/second_order_system_sign_flip.py. Se conserva solo como
+ referencia; no se usa en la tesis.
+
  Reúne todo el análisis de la caída radial descrita por una expansión en
- momentos truncada a segundo orden, en su versión autoconsistente (los momentos
+ momentos truncada a segundo orden, en su versión con retroalimentación (los momentos
  G retroalimentan a la posición r y al momento p_r).
 
  Produce:
    FIG 1 : momento total |p_r| y momentos |G| en función de r (rama de caída)
    FIG 2 : ruptura de la aproximación  (r* donde la corrección = clásico)
-   FIG 3 : NO hay rebote — r(λ) cae monótonamente; descomposición de dr/dλ
-           mostrando que clásico y corrección casi se cancelan pero ambos
-           divergen juntos, sin llegar a cruzar cero
-   FIG 4 : p_r y dr/dλ divergen a la vez cerca del corte (no hay desacople
-           momento-velocidad) + comparación con la geodésica clásica
-   FIG 5 : comprobación de robustez — al subir el corte de seguridad muchos
-           órdenes de magnitud, lambda_c converge (divergencia real del
-           modelo) mientras que el radio en el corte no converge
-   TABLA : radio de ruptura r* y lambda_c convergido según el paquete G0
-
- NOTA IMPORTANTE: a diferencia del sistema original (donde tras r* la
- trayectoria "rebotaba" con dr/dλ→0 de forma limpia, un retorno físico),
- en este sistema con los signos de G invertidos la trayectoria r(λ) NO
- tiene ningún mínimo real seguido de una rama de regreso: cae de forma
- monótona mientras los tres momentos G divergen en un lambda finito
- (lambda_c), un polo móvil genuino de las ecuaciones. Se comprobó que
- lambda_c converge al refinar tolerancias y subir el corte de seguridad
- en más de veinte órdenes de magnitud, así que no es un artefacto
- numérico. Por eso las figuras y el texto evitan "rebote", "retorno
- físico" y "pliegue", y hablan en su lugar de "divergencia en lambda
- finito" y "corte por crecimiento descontrolado".
+   FIG 3 : boomerang  (r(λ) rebota; descomposición de dr/dλ)
+   FIG 4 : desacople momento-velocidad + comparación con la geodésica clásica
+   FIG 5 : el rebote como PLIEGUE al graficar la trayectoria completa vs r
+   TABLA : acercamiento máximo a 2m (r_min) y ruptura (r*) según el paquete G0
 
  Todos los números que se citan en el informe se imprimen por pantalla.
 
@@ -79,7 +59,7 @@ f = 1 - 2*G*M/(c**2 * r)
 
 
 # =========================================================================
-# ETAPA 2 — LADO DERECHO DEL SISTEMA (autoconsistente, nuevo sistema)
+# ETAPA 2 — LADO DERECHO DEL SISTEMA (con momentos)
 # =========================================================================
 f1 = sp.diff(f, r)
 f2 = sp.diff(f, r, 2)
@@ -91,11 +71,9 @@ W2 = sp.diff(W, r, 2)
 W3 = sp.diff(W, r, 3)
 
 # ecuación de la posición  (los G entran aquí -> retroalimentación)
-# -- idéntica a la del sistema original --
 r_dot = p_r*f + f1*G11 + sp.Rational(1, 2)*p_r*G20*f2
 
 # ecuación del momento (completa)
-# -- idéntica a la del sistema original --
 pr_dot = ( sp.Rational(1, 2)*W1
          - sp.Rational(1, 2)*f1*p_r**2
          - sp.Rational(1, 2)*f1*G02
@@ -104,16 +82,11 @@ pr_dot = ( sp.Rational(1, 2)*W1
          - sp.Rational(1, 4)*f3*p_r**2*G20 )
 
 # ecuaciones de los momentos de 2º orden
-# -- NUEVO: signo invertido respecto al sistema original --
-G11_dot = -( -f*G02 - sp.Rational(1, 2)*W2*G20 + sp.Rational(1, 2)*f2*p_r**2*G20 )
-G02_dot = -( 2*p_r*f1*G02 - W2*G11 + f2*p_r**2*G11 )
-G20_dot = -( -2*f*G11 - 2*p_r*f1*G20 )
+G11_dot = -f*G02 - sp.Rational(1, 2)*W2*G20 + sp.Rational(1, 2)*f2*p_r**2*G20
+G02_dot = 2*p_r*f1*G02 - W2*G11 + f2*p_r**2*G11
+G20_dot = -2*f*G11 - 2*p_r*f1*G20
 
 # Hamiltoniano efectivo (test de conservación)
-# NOTA: al invertir el signo de los G_dot el sistema deja de ser, en general,
-# el flujo hamiltoniano de H_eff (esa H_eff correspondía al sistema original).
-# Se conserva aquí solo como diagnóstico informativo, no como cantidad
-# necesariamente conservada del nuevo sistema.
 Hc   = sp.Rational(1, 2)*(f*p_r**2 - W)
 H_rr = sp.Rational(1, 2)*(f2*p_r**2 - W2)
 H_rp = f1*p_r
@@ -158,7 +131,7 @@ def pr_onshell(r0):
 
 def integrar(G0, r0=10.0, lam_max=80.0, npts=20000,
              rtol=1e-12, atol=1e-15, mom_max=1e14):
-    """Integra el sistema autoconsistente con G20(0)=G02(0)=G0, G11(0)=0."""
+    """Integra el sistema con momentos con G20(0)=G02(0)=G0, G11(0)=0."""
     y0 = [r0, pr_onshell(r0), G0, 0.0, G0]
 
     def horizonte(lam, y):
@@ -185,41 +158,18 @@ def integrar(G0, r0=10.0, lam_max=80.0, npts=20000,
     corr_max = np.maximum.reduce([aG20, aG11, aG02])
     ratio = corr_max / clas
     idx = int(np.argmax(ratio >= 1.0))
-    if ratio[idx] >= 1.0 and idx > 0:      # interpola r* y lambda*
+    if ratio[idx] >= 1.0 and idx > 0:      # interpola r*
         y1, y2 = ratio[idx-1]-1, ratio[idx]-1
         r_star = r_s[idx-1] - y1*(r_s[idx]-r_s[idx-1])/(y2-y1)
-        lam_star = lam[idx-1] - y1*(lam[idx]-lam[idx-1])/(y2-y1)
         culpable = ['G20','G11','G02'][int(np.argmax([aG20[idx],aG11[idx],aG02[idx]]))]
     else:
-        r_star, lam_star, culpable = float('nan'), float('nan'), None
+        r_star, culpable = float('nan'), None
     imin = int(np.argmin(r_s))
 
     return dict(sol=sol, lam=lam, r=r_s, pr=pr_s, G20=G20_s, G11=G11_s, G02=G02_s,
                 clas=clas, aG20=aG20, aG11=aG11, aG02=aG02, ratio=ratio,
-                r_star=r_star, lam_star=lam_star, culpable=culpable, imin=imin,
-                r_min=r_s[imin], lam_min=lam[imin], max_ratio=np.max(ratio))
-
-
-def lambda_c_convergencia(G0, r0=10.0, mom_max=1e30, rtol=1e-13, atol=1e-16):
-    """Ubica el punto de divergencia matemática (polo móvil) empujando el
-    corte de seguridad mom_max muy por encima de lo razonable. Si lambda_c
-    converge al variar mom_max, es una divergencia genuina del modelo, no
-    un artefacto del corte numérico."""
-    y0 = [r0, pr_onshell(r0), G0, 0.0, G0]
-
-    def horizonte(lam, y):
-        return y[0] - 1.00001*rs_val
-    horizonte.terminal = True
-    horizonte.direction = -1
-
-    def validez(lam, y):
-        return mom_max - max(abs(y[2]), abs(y[3]), abs(y[4]))
-    validez.terminal = True
-    validez.direction = -1
-
-    sol = solve_ivp(system, (0.0, 80.0), y0, events=[horizonte, validez],
-                    method='DOP853', rtol=rtol, atol=atol, max_step=0.5)
-    return sol.t[-1], sol.y[0, -1], sol.status
+                r_star=r_star, culpable=culpable, imin=imin,
+                r_min=r_s[imin], lam_min=lam[imin])
 
 
 # =========================================================================
@@ -234,26 +184,15 @@ r_star, r_min, lam_min = D['r_star'], D['r_min'], D['lam_min']
 H_series = H_func(r_s, pr_s, G20_s, G11_s, G02_s)
 drift = np.max(np.abs(H_series - H_series[0]))
 
-print("================ NÚMEROS PARA EL INFORME (G0=1e-2) — SISTEMA CON $\\dot G$ INVERTIDO ================")
+print("================ NÚMEROS PARA EL INFORME (G0=1e-2) ================")
 print(f"Condiciones iniciales: r0=10, p_r0={pr_onshell(10.0):.5f}, G20=G02={G0_PRINCIPAL}, G11=0, E={E_val}")
-print(f"H_eff (diagnóstico, NO es el generador de este sistema -> no es una cantidad conservada garantizada):")
-print(f"  H0={H_series[0]:.6e},  deriva máx={drift:.2e}")
-if np.isnan(r_star):
-    print("Ruptura: no se alcanzó ratio>=1 dentro del rango integrado")
-else:
-    i_star = np.argmin(np.abs(r_s - r_star))
-    print(f"Ruptura:  r* = {r_star:.4f}  en lambda*={D['lam_star']:.4f}  (la dispara {D['culpable']})")
-    print(f"   en r*: G20={G20_s[i_star]:.4e}  G11={G11_s[i_star]:.4e}  G02={G02_s[i_star]:.4e}  p_r={pr_s[i_star]:.4e}")
-print(f"\nCorte de la integración (por crecimiento descontrolado de los momentos):")
-print(f"   r_corte = {r_min:.4f} en lambda={lam_min:.3f}  (no hay rama de regreso: r es monótona decreciente hasta el corte)")
+print(f"Conservación H_eff:  H0={H_series[0]:.6e},  deriva máx={drift:.2e}")
+print(f"Ruptura:  r* = {r_star:.4f}  (la dispara {D['culpable']})")
+print(f"   momentos cerca de r*: G20={G20_s[D['sol'].t.searchsorted(0)] if False else G20_s[np.argmin(np.abs(r_s-r_star))]:.3e}")
+print(f"Boomerang: r_min = {r_min:.4f} en lambda={lam_min:.3f}")
 rdc = rclas_f(*[a[imin] for a in D['sol'].y]); rdk = rcorr_f(*[a[imin] for a in D['sol'].y])
-print(f"   dr/dλ en el corte: clásico={rdc:+.4f}, corrección={rdk:+.4f}, suma={rdc+rdk:+.4f}  (NUNCA cruza cero)")
-print(f"   p_r en el corte = {pr_s[imin]:+.3f}")
-
-lam_c_conv, r_c_conv, status_c = lambda_c_convergencia(G0_PRINCIPAL)
-print(f"\nUbicación robusta del polo (independiente del corte de seguridad):")
-print(f"   lambda_c = {lam_c_conv:.6f}  (converge al refinar tolerancias / subir el corte)")
-print(f"   r justo antes del polo ~ {r_c_conv:.4f}  (sigue bajando si se afina más: NO converge del mismo modo que lambda_c)")
+print(f"   dr/dλ en el retorno: clásico={rdc:+.4f}, corrección={rdk:+.4f}, suma={rdc+rdk:+.4f}")
+print(f"   p_r en el retorno = {pr_s[imin]:+.3f}  (NO se anula: no es retorno físico)")
 
 
 # =========================================================================
@@ -279,15 +218,11 @@ print(f"   apoapsis clásica f=E²: r={r_apo:.2f} (no hay retorno interior clás
 # =========================================================================
 # ETAPA 7 — BARRIDO: acercamiento a 2m según el paquete inicial G0
 # =========================================================================
-print("\n== Barrido en G0: ruptura (si existe), corte numérico y polo convergido ==")
-print(f"{'G0':>8} {'r_corte':>10} {'r*':>10} {'lambda_c':>12}")
-tabla_barrido = []
+print("\n== Acercamiento a 2m según G0 ==")
+print(f"{'G0':>8} {'r_min':>10} {'r*':>10}")
 for g0 in [1e-2, 1e-4, 1e-6, 1e-8, 1e-10]:
     d = integrar(g0)
-    lam_c_g0, r_c_g0, _ = lambda_c_convergencia(g0)
-    r_star_txt = f"{d['r_star']:>10.4f}" if not np.isnan(d['r_star']) else f"{'—':>10}"
-    print(f"{g0:>8.0e} {d['r_min']:>10.4f} {r_star_txt} {lam_c_g0:>12.6f}")
-    tabla_barrido.append((g0, d['r_min'], d['r_star'], lam_c_g0, r_c_g0))
+    print(f"{g0:>8.0e} {d['r_min']:>10.4f} {d['r_star']:>10.4f}")
 
 
 # =========================================================================
@@ -300,22 +235,20 @@ sl = slice(0, imin+1)     # rama de caída (r monótona)
 
 fig1, (a1, a2) = plt.subplots(1, 2, figsize=(13.5, 5.2))
 a1.semilogy(r_s[sl], np.abs(pr_s[sl]), color=COL['pr'], lw=2.3)
-if not np.isnan(r_star):
-    a1.axvline(r_star, color='crimson', lw=1.6)
-    a1.text(r_star-0.1, a1.get_ylim()[1]*0.3, f'$r_*={r_star:.2f}$', color='crimson', ha='right', fontsize=10)
+a1.axvline(r_star, color='crimson', lw=1.6)
+a1.text(r_star-0.1, a1.get_ylim()[1]*0.3, f'$r_*={r_star:.2f}$', color='crimson', ha='right', fontsize=10)
 a1.axvline(rs_val, ls=':', color='k', lw=1.0)
 a1.set_xlim(10.0, r_min-0.05); a1.set_xlabel(r'$r$'); a1.set_ylabel(r'$|p_r|$  (log)')
 a1.set_title('Momento total durante la caída')
 for nm, ser in [('G20',G20_s),('G11',G11_s),('G02',G02_s)]:
     a2.semilogy(r_s[sl], np.abs(ser[sl]), color=COL[nm], lw=2, label=fr'$|G^{{{nm[1]},{nm[2]}}}|$')
-if not np.isnan(r_star):
-    a2.axvline(r_star, color='crimson', lw=1.6)
-    a2.text(r_star-0.1, a2.get_ylim()[1]*0.3, f'$r_*={r_star:.2f}$', color='crimson', ha='right', fontsize=10)
+a2.axvline(r_star, color='crimson', lw=1.6)
+a2.text(r_star-0.1, a2.get_ylim()[1]*0.3, f'$r_*={r_star:.2f}$', color='crimson', ha='right', fontsize=10)
 a2.axvline(rs_val, ls=':', color='k', lw=1.0)
 a2.set_xlim(10.0, r_min-0.05); a2.set_xlabel(r'$r$'); a2.set_ylabel('momentos  (log)')
 a2.set_title('Momentos de 2º orden durante la caída'); a2.legend(loc='upper right')
-fig1.suptitle('Sistema con signos invertidos en $\\dot G$: momento total y momentos $G$ vs $r$', y=1.00, fontsize=13)
-fig1.tight_layout(); fig1.savefig('sistema2_fig1_momentos.png', dpi=140, bbox_inches='tight')
+fig1.suptitle('Sistema con momentos: momento radial y momentos $G$ vs $r$', y=1.00, fontsize=13)
+fig1.tight_layout(); fig1.savefig('informe_fig1_momentos.png', dpi=140, bbox_inches='tight')
 
 
 # =========================================================================
@@ -327,28 +260,24 @@ b1.semilogy(r_s[sl], clas[sl], color='#777', lw=2.3, ls='--', label='clásico')
 b1.semilogy(r_s[sl], aG20[sl], color=COL['G20'], lw=1.8, label=r'aport. $G^{2,0}$')
 b1.semilogy(r_s[sl], aG11[sl], color=COL['G11'], lw=1.8, label=r'aport. $G^{1,1}$')
 b1.semilogy(r_s[sl], aG02[sl], color=COL['G02'], lw=1.8, label=r'aport. $G^{0,2}$')
-if not np.isnan(r_star):
-    b1.axvline(r_star, color='crimson', lw=1.8)
-    b1.text(r_star-0.1, b1.get_ylim()[1]*0.3, f'$r_*={r_star:.2f}$', color='crimson', ha='right', fontsize=10)
+b1.axvline(r_star, color='crimson', lw=1.8)
+b1.text(r_star-0.1, b1.get_ylim()[1]*0.3, f'$r_*={r_star:.2f}$', color='crimson', ha='right', fontsize=10)
 b1.set_xlim(10.0, r_min-0.05); b1.set_xlabel(r'$r$'); b1.set_ylabel(r'aportación a $dp_r/d\lambda$  (log)')
 b1.set_title('Cada corrección alcanza al término clásico'); b1.legend(loc='lower left', fontsize=9)
 b2.semilogy(r_s[sl], ratio[sl], color='#6a3d9a', lw=2.3)
 b2.axhline(1.0, color='crimson', ls='--', lw=1.4)
-if not np.isnan(r_star):
-    b2.plot([r_star], [1.0], 'o', color='crimson', ms=8, zorder=5)
-    b2.annotate(f'$r_*={r_star:.2f}$', xy=(r_star, 1.0), xytext=(r_star+1.0, 8),
-                color='crimson', fontsize=11, arrowprops=dict(arrowstyle='->', color='crimson'))
+b2.plot([r_star], [1.0], 'o', color='crimson', ms=8, zorder=5)
+b2.annotate(f'$r_*={r_star:.2f}$', xy=(r_star, 1.0), xytext=(r_star+1.0, 8),
+            color='crimson', fontsize=11, arrowprops=dict(arrowstyle='->', color='crimson'))
 b2.set_xlim(10.0, r_min-0.05); b2.set_xlabel(r'$r$')
 b2.set_ylabel(r'$\max_i|\mathrm{aport.}\,G_i|\,/\,|\mathrm{clásico}|$')
 b2.set_title('Razón corrección/clásico: cruza 1 en la ruptura')
-fig2.suptitle('¿Dónde muere la aproximación de 2º orden? (sistema con $\\dot G$ invertido)', y=1.00, fontsize=13)
-fig2.tight_layout(); fig2.savefig('sistema2_fig2_ruptura.png', dpi=140, bbox_inches='tight')
+fig2.suptitle('¿Dónde muere la aproximación de 2º orden?', y=1.00, fontsize=13)
+fig2.tight_layout(); fig2.savefig('informe_fig2_ruptura.png', dpi=140, bbox_inches='tight')
 
 
 # =========================================================================
-# FIGURA 3 — divergencia: r(λ) NO rebota, cae monótonamente hasta el corte;
-#            descomposición de dr/dλ (clásico y corrección divergen juntos,
-#            sin llegar a cancelarse: la suma nunca cruza cero)
+# FIGURA 3 — boomerang: r(λ) rebota; descomposición de dr/dλ
 # =========================================================================
 rdot_clas = rclas_f(r_s, pr_s, G20_s, G11_s, G02_s)
 rdot_corr = rcorr_f(r_s, pr_s, G20_s, G11_s, G02_s)
@@ -356,88 +285,85 @@ rdot_full = rdot_clas + rdot_corr
 fig3, (e1, e2) = plt.subplots(1, 2, figsize=(13.5, 5.2))
 e1.plot(lam, r_s, 'k', lw=2.4)
 e1.plot(lam_min, r_min, 'o', color='crimson', ms=9, zorder=5)
-if not np.isnan(r_star):
-    e1.axhline(r_star, color='crimson', ls='--', lw=1.3)
-    e1.text(lam[0], r_star+0.15, f'$r_*={r_star:.2f}$ (muere la aprox.)', color='crimson', fontsize=9)
+e1.axhline(r_star, color='crimson', ls='--', lw=1.3)
+e1.text(lam[0], r_star+0.15, f'$r_*={r_star:.2f}$ (muere la aprox.)', color='crimson', fontsize=9)
 e1.axhline(rs_val, color='gray', ls=':', lw=1.3)
 e1.text(lam[0], rs_val+0.15, 'horizonte $2m$', color='gray', fontsize=9)
-e1.annotate(f'corte numérico\n$r={r_min:.2f}$', xy=(lam_min, r_min),
+e1.annotate(f'retorno\n$r_{{min}}={r_min:.2f}$', xy=(lam_min, r_min),
             xytext=(lam_min-6, 5.3), color='crimson', fontsize=10,
             arrowprops=dict(arrowstyle='->', color='crimson'))
-e1.set_xlabel(r'$\lambda$'); e1.set_ylabel(r'$r$')
-e1.set_title(r'$r(\lambda)$ cae monótonamente: NO hay rebote')
+e1.set_xlabel(r'$\lambda$'); e1.set_ylabel(r'$r$'); e1.set_title(r'$r(\lambda)$ baja, se frena y rebota')
 e2.plot(lam, rdot_clas, lw=2, label=r'clásico  $p_r f$')
 e2.plot(lam, rdot_corr, lw=2, label=r"corrección  $f'G^{1,1}+\frac{1}{2}p_r G^{2,0}f''$")
 e2.plot(lam, rdot_full, 'k', lw=2.4, label=r'suma $=dr/d\lambda$')
-e2.axhline(0, color='gray', ls='--', lw=1.0)
-e2.plot(lam_min, rdot_full[imin], 'o', color='crimson', ms=8, zorder=5)
-e2.set_ylim(-500, 500); e2.set_xlabel(r'$\lambda$'); e2.set_ylabel(r'$dr/d\lambda$')
-e2.set_title('Clásico y corrección casi se cancelan, pero ambos divergen'); e2.legend(fontsize=9, loc='upper left')
-fig3.suptitle('No hay bumerán: $r$ cae y los momentos divergen en $\\lambda$ finito (sistema con $\\dot G$ invertido)', y=1.00, fontsize=13)
-fig3.tight_layout(); fig3.savefig('sistema2_fig3_divergencia.png', dpi=140, bbox_inches='tight')
+e2.axhline(0, color='crimson', ls='--', lw=1.2)
+e2.plot(lam_min, 0, 'o', color='crimson', ms=8, zorder=5)
+e2.set_ylim(-15, 15); e2.set_xlabel(r'$\lambda$'); e2.set_ylabel(r'$dr/d\lambda$')
+e2.set_title('La corrección cancela al clásico: $dr/d\\lambda=0$'); e2.legend(fontsize=9, loc='upper left')
+fig3.suptitle('El boomerang: artefacto de la retroalimentación descontrolada', y=1.00, fontsize=13)
+fig3.tight_layout(); fig3.savefig('informe_fig3_boomerang.png', dpi=140, bbox_inches='tight')
 
 
 # =========================================================================
-# FIGURA 4 — p_r y dr/dλ divergen juntos cerca del corte (no hay desacople:
-#            ambos se disparan a la vez) + comparación con la clásica
+# FIGURA 4 — desacople momento-velocidad + comparación clásica
 # =========================================================================
 fig4, (A, Bx) = plt.subplots(1, 2, figsize=(13.5, 5.3))
-A.plot(lam, r_s, 'b', lw=2.4, label='autoconsistente (diverge)')
+A.plot(lam, r_s, 'b', lw=2.4, label='con momentos (rebota)')
 A.plot(sc.t, sc.y[0], 'g--', lw=2.2, label='clásico puro (llega a $2m$)')
 A.plot(lam_min, r_min, 'o', color='crimson', ms=9, zorder=5)
 A.axhline(rs_val, color='k', ls=':', lw=1.3); A.text(0.3, 2.15, 'horizonte $2m$', fontsize=9)
-if not np.isnan(r_star):
-    A.axhline(r_star, color='crimson', ls=':', lw=1.1)
-    A.text(0.3, r_star+0.15, f'$r_*={r_star:.2f}$', color='crimson', fontsize=9)
+A.axhline(r_star, color='crimson', ls=':', lw=1.1)
+A.text(0.3, r_star+0.15, f'$r_*={r_star:.2f}$', color='crimson', fontsize=9)
 A.set_xlabel(r'$\lambda$'); A.set_ylabel(r'$r$'); A.set_ylim(1.5, 12)
-A.set_title('El clásico alcanza $2m$; el truncado diverge antes'); A.legend(loc='upper right', fontsize=9)
-sl2 = slice(max(0, imin-200), imin+1)
+A.set_title('El clásico alcanza $2m$; el truncado rebota antes'); A.legend(loc='upper right', fontsize=9)
+sl2 = slice(max(0, imin-1500), imin+1)
 Bx.plot(lam[sl2], pr_s[sl2], color='#2ca02c', lw=2.4)
 Bxt = Bx.twinx()
 Bxt.plot(lam[sl2], rdot_full[sl2], color='#111', lw=2.4)
+Bxt.axhline(0, color='crimson', ls='--', lw=1.3)
 Bx.plot(lam_min, pr_s[imin], 'o', color='#2ca02c', ms=9, zorder=5)
 Bxt.plot(lam_min, rdot_full[imin], 'o', color='#111', ms=9, zorder=5)
-Bx.annotate(f'$p_r={pr_s[imin]:.0f}$\n(diverge, no oscila)', xy=(lam_min, pr_s[imin]),
-            xytext=(lam_min-0.6, pr_s[imin]*0.6), color='#2ca02c', fontsize=10,
+Bx.annotate(f'$p_r={pr_s[imin]:.1f}$\n(sigue hacia adentro)', xy=(lam_min, pr_s[imin]),
+            xytext=(lam_min-5, pr_s[imin]+3), color='#2ca02c', fontsize=10,
             arrowprops=dict(arrowstyle='->', color='#2ca02c'))
-Bxt.annotate(r'$dr/d\lambda$ diverge (nunca cruza 0)', xy=(lam_min, rdot_full[imin]),
-             xytext=(lam[sl2][0], rdot_full[imin]*0.3),
+Bxt.annotate(r'$dr/d\lambda\to 0$', xy=(lam_min, 0), xytext=(lam_min-6, 4),
              color='#111', fontsize=10, arrowprops=dict(arrowstyle='->', color='#111'))
 Bx.set_xlabel(r'$\lambda$'); Bx.set_ylabel(r'$p_r$', color='#2ca02c')
-Bxt.set_ylabel(r'$dr/d\lambda$', color='#111')
-Bx.set_title(r'Cerca del corte: $p_r$ y $dr/d\lambda$ divergen a la vez')
-fig4.suptitle('Momento y velocidad NO se desacoplan: ambos se disparan juntos (sistema con $\\dot G$ invertido)', y=1.00, fontsize=12.5)
-fig4.tight_layout(); fig4.savefig('sistema2_fig4_crecimiento.png', dpi=140, bbox_inches='tight')
+Bxt.set_ylabel(r'$dr/d\lambda$', color='#111'); Bxt.set_ylim(-8, 8)
+Bx.set_title(r'En el rebote: momento $\neq 0$ pero velocidad $=0$')
+fig4.suptitle('El rebote no es un retorno físico: momento y velocidad se desacoplan', y=1.00, fontsize=12.5)
+fig4.tight_layout(); fig4.savefig('informe_fig4_desacople.png', dpi=140, bbox_inches='tight')
 
 
 # =========================================================================
-# FIGURA 5 — ¿es real la divergencia o un artefacto del corte numérico?
+# FIGURA 5 — el rebote como PLIEGUE (trayectoria completa vs r)
 # -------------------------------------------------------------------------
-# Se sube el corte de seguridad mom_max en muchos órdenes de magnitud.
-# Si lambda_c converge a un valor fijo (izquierda) mientras que el radio
-# alcanzado en el corte NO converge y sigue bajando (derecha), es la firma
-# de una divergencia matemática genuina en lambda finito (un polo móvil de
-# las ecuaciones), no un artefacto de haber elegido mal el corte.
+# Al no recortar en r_min, la rama de regreso (punteada) repasa los mismos
+# radios que la de caída (sólida) y se superpone: ese pliegue ES el rebote.
+# Se usa G0=1e-2 porque deja una rama de regreso larga y bien visible
+# (con G0 mucho menor el rebote colapsa en un pico y no se aprecia).
 # =========================================================================
-mom_max_grid = np.array([1e6, 1e8, 1e10, 1e14, 1e18, 1e22, 1e26, 1e30])
-lam_c_grid, r_c_grid = [], []
-for mm in mom_max_grid:
-    lc, rc, _ = lambda_c_convergencia(G0_PRINCIPAL, mom_max=mm)
-    lam_c_grid.append(lc); r_c_grid.append(rc)
-lam_c_grid = np.array(lam_c_grid); r_c_grid = np.array(r_c_grid)
+caida = slice(0, imin+1); regreso = slice(imin, None)
+fig5, (g1, g2) = plt.subplots(1, 2, figsize=(13.5, 5.3))
+g1.semilogy(r_s[caida], np.abs(pr_s[caida]), color=COL['pr'], lw=2.3, label='caída')
+g1.semilogy(r_s[regreso], np.abs(pr_s[regreso]), color=COL['pr'], lw=2.0, ls=':', label='regreso (rebote)')
+g1.plot(r_min, np.abs(pr_s[imin]), 'o', color='crimson', ms=9, zorder=5)
+g1.annotate(f'rebote\n$r_{{min}}={r_min:.2f}$', xy=(r_min, np.abs(pr_s[imin])),
+            xytext=(r_min+1.3, np.abs(pr_s[imin])*0.3), color='crimson', fontsize=10,
+            arrowprops=dict(arrowstyle='->', color='crimson'))
+g1.axvline(rs_val, ls='--', color='r', lw=1.3); g1.text(rs_val+0.03, g1.get_ylim()[0]*3, '$2m$', color='r', fontsize=10)
+g1.set_xlim(10.0, rs_val-0.02); g1.set_xlabel(r'$r$'); g1.set_ylabel(r'$|p_r|$  (log)')
+g1.set_title('Momento total: caída y regreso se pliegan'); g1.legend(loc='upper left', fontsize=9)
+for nm, ser in [('G20',G20_s),('G11',G11_s),('G02',G02_s)]:
+    g2.semilogy(r_s[caida], np.abs(ser[caida]), color=COL[nm], lw=2, label=fr'$|G^{{{nm[1]},{nm[2]}}}|$')
+    g2.semilogy(r_s[regreso], np.abs(ser[regreso]), color=COL[nm], lw=1.8, ls=':')
+g2.axvline(r_min, color='crimson', lw=1.2, alpha=.5)
+g2.annotate(f'rebote\n$r_{{min}}={r_min:.2f}$', xy=(r_min, 1e-3), xytext=(r_min+1.5, 1e-4),
+            color='crimson', fontsize=10, arrowprops=dict(arrowstyle='->', color='crimson'))
+g2.axvline(rs_val, ls='--', color='r', lw=1.3); g2.text(rs_val+0.03, g2.get_ylim()[0]*3, '$2m$', color='r', fontsize=10)
+g2.set_xlim(10.0, rs_val-0.02); g2.set_xlabel(r'$r$'); g2.set_ylabel('momentos  (log)')
+g2.set_title('Momentos $G$: mismo pliegue en $r_{min}$'); g2.legend(loc='upper left', fontsize=9)
+fig5.suptitle('El rebote visto contra $r$: un pliegue de la trayectoria en $r_{min}$', y=1.00, fontsize=12.5)
+fig5.tight_layout(); fig5.savefig('informe_fig5_rebote.png', dpi=140, bbox_inches='tight')
 
-fig5, (h1, h2) = plt.subplots(1, 2, figsize=(13.5, 5.3))
-h1.semilogx(mom_max_grid, lam_c_grid, 'o-', color='#6a3d9a', lw=2, ms=7)
-h1.axhline(lam_c_grid[-1], color='gray', ls='--', lw=1.2)
-h1.set_xlabel(r'corte de seguridad mom_max'); h1.set_ylabel(r'$\lambda_c$ (dónde se detiene la integración)')
-h1.set_title(r'$\lambda_c$ CONVERGE: es una divergencia real, no del corte')
-h2.semilogx(mom_max_grid, r_c_grid, 'o-', color='#e6550d', lw=2, ms=7)
-h2.axhline(rs_val, color='k', ls=':', lw=1.2)
-h2.text(mom_max_grid[0], rs_val+0.03, 'horizonte $2m$', fontsize=9)
-h2.set_xlabel(r'corte de seguridad mom_max'); h2.set_ylabel(r'$r$ justo antes del corte')
-h2.set_title(r'$r$ en el corte NO converge: sigue bajando hacia $2m$')
-fig5.suptitle('Comprobación de robustez: la divergencia de los momentos es del modelo, no numérica (sistema con $\\dot G$ invertido)', y=1.00, fontsize=12.5)
-fig5.tight_layout(); fig5.savefig('sistema2_fig5_convergencia.png', dpi=140, bbox_inches='tight')
-
-print("\nFiguras guardadas: sistema2_fig1_momentos, sistema2_fig2_ruptura, "
-      "sistema2_fig3_divergencia, sistema2_fig4_crecimiento, sistema2_fig5_convergencia")
+print("\nFiguras guardadas: informe_fig1..5")

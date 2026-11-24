@@ -16,6 +16,7 @@ for mu in range(4):
 R = cancel(R)
 R = factor(R)
 
-print(f"R &= {latex(R)} \\\\")
-print('#'*80)
-print(f"R &= {R} \\\\")
+if __name__ == "__main__":
+    print(f"R &= {latex(R)} \\\\")
+    print('#'*80)
+    print(f"R &= {R} \\\\")
