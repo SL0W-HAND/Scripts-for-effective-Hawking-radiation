@@ -1,4 +1,5 @@
 # Scripts de la tesis
+[![DOI](https://zenodo.org/badge/1411246351.svg)](https://doi.org/10.5281/zenodo.24518761)
 
 Scripts de cálculo simbólico y numérico de la tesis *Análisis efectivo de la radiación de agujeros negros regulares*. En la tesis, cada script se cita a pie de página por su ruta relativa a este repositorio (por ejemplo, `AAA_method/validity_and_exponents.py`).
 
