@@ -1,5 +1,5 @@
 """
-Sistema AUTOCONSISTENTE a ORDEN 3 (9 variables): r, p_r, y los momentos
+Sistema con momentos a ORDEN 3 (9 variables): r, p_r, y los momentos
 de 2º orden (G20, G11, G02) y 3er orden (G30, G21, G12, G03).
 Ecuaciones verificadas simbólicamente con el álgebra de Poisson en la
 convención posición-primero (ver third_order_derivation.py / G_poisson_brackets.py).

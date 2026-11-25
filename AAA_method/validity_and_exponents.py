@@ -3,8 +3,8 @@ Validez del desarrollo y carácter de la divergencia en Schwarzschild
 (caída radial masiva, E = 0.97, r0 = 10, G20 = G02 = G0, G11 = 0).
 
 1. Criterio de validez q = sigma_r/(r - r_s): como H contiene E^2/(2 f), sus
-   derivadas d^n H/dr^n ~ (r - r_s)^{-(n+1)} y la serie en momentos solo tiene
-   sentido mientras sigma_r << r - r_s.  Se reporta dónde q cruza 1 y su valor
+   derivadas d^n H/dr^n ~ (r - r_s)^{-(n+1)} y las correcciones de momentos solo son pequeñas
+   mientras sigma_r << r - r_s.  Se reporta dónde q cruza 1 y su valor
    al divergir los momentos, para cada G0.
 2. Exponentes cerca de lambda_c: ajuste log-log de |p_r|, |G02|, |G11| y
    |dr/dl| frente a (lambda_c - lambda), con varias ventanas de ajuste y dos
